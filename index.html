@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InternTrack – Quản lý Thực tập</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--primary:#16a87c;--primary-dark:#0d7a5a;--primary-light:#e6f7f1;--primary-mid:#b3e8d8;--warning:#d97706;--warning-light:#fef3c7;--danger:#dc2626;--danger-light:#fee2e2;--info:#2563eb;--info-light:#dbeafe;--text:#111827;--text-2:#4b5563;--text-3:#9ca3af;--border:#e5e7eb;--border-2:#d1d5db;--bg:#f3f4f6;--surface:#ffffff;--surface-2:#f9fafb;--radius:10px;--radius-sm:6px;--radius-lg:14px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+.topbar{position:fixed;top:0;left:0;right:0;height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.5rem;gap:12px;z-index:100}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;color:var(--primary)}
+.logo svg{width:28px;height:28px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.user-pill{display:flex;align-items:center;gap:8px;padding:5px 12px;background:var(--surface-2);border:1px solid var(--border);border-radius:99px;font-size:13px;font-weight:500;cursor:pointer}
+.avatar-sm{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;background:var(--primary-light);color:var(--primary-dark);flex-shrink:0}
+.db-indicator{font-size:11px;padding:3px 8px;border-radius:99px;background:var(--warning-light);color:var(--warning);font-weight:600;border:1px solid #fcd34d}
+.db-indicator.live{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary-mid)}
+.layout{display:flex;padding-top:56px;min-height:100vh}
+.sidebar{width:220px;background:var(--surface);border-right:1px solid var(--border);position:fixed;top:56px;bottom:0;overflow-y:auto;padding:1rem 0;display:flex;flex-direction:column}
+.sidebar.hidden{display:none!important}
+.sidebar-section{padding:0 .75rem;margin-bottom:1rem}
+.sidebar-label{font-size:10px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.08em;padding:0 .5rem;margin-bottom:4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;color:var(--text-2);transition:all .15s}
+.nav-item:hover{background:var(--surface-2);color:var(--text)}
+.nav-item.active{background:var(--primary-light);color:var(--primary-dark)}
+.nav-item svg{width:17px;height:17px;flex-shrink:0}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;border-radius:99px;min-width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.content{margin-left:220px;flex:1;padding:1.5rem;max-width:1100px}
+.page{display:none}.page.active{display:block}
+.page-title{font-size:20px;font-weight:700}.page-sub{font-size:13px;color:var(--text-2);margin-top:2px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.25rem}
+.metrics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.5rem}
+.metric-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem 1.25rem}
+.metric-val{font-size:28px;font-weight:700;line-height:1;margin-bottom:4px}
+.metric-lbl{font-size:12px;color:var(--text-2)}
+.metric-card.green .metric-val{color:var(--primary)}.metric-card.amber .metric-val{color:var(--warning)}.metric-card.red .metric-val{color:var(--danger)}.metric-card.blue .metric-val{color:var(--info)}
+.alert{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:1rem}
+.alert svg{width:16px;height:16px;flex-shrink:0;margin-top:1px}
+.alert.warning{background:var(--warning-light);color:#92400e;border:1px solid #fcd34d}
+.alert.success{background:var(--primary-light);color:var(--primary-dark);border:1px solid var(--primary-mid)}
+.alert.danger{background:var(--danger-light);color:#991b1b;border:1px solid #fca5a5}
+.alert.info{background:var(--info-light);color:#1e40af;border:1px solid #93c5fd}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.05em;padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--border)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:var(--surface-2)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.badge.green{background:var(--primary-light);color:var(--primary-dark)}.badge.amber{background:var(--warning-light);color:#92400e}.badge.red{background:var(--danger-light);color:#991b1b}.badge.blue{background:var(--info-light);color:#1e40af}.badge.gray{background:var(--bg);color:var(--text-2)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border-2)}.btn-secondary:hover{background:var(--surface-2)}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#b91c1c}
+.btn svg{width:15px;height:15px}.btn-sm{padding:4px 10px;font-size:12px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:12px;font-weight:600;color:var(--text-2)}
+.form-label .req{color:var(--danger);margin-left:2px}
+.form-control{padding:8px 11px;border:1px solid var(--border-2);border-radius:var(--radius-sm);background:var(--surface);color:var(--text);font-size:13px;font-family:inherit;transition:border-color .15s;width:100%}
+.form-control:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(22,168,124,.12)}
+textarea.form-control{min-height:80px;resize:vertical;line-height:1.5}
+.form-hint{font-size:11px;color:var(--text-3)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.upload-area{border:2px dashed var(--border-2);border-radius:var(--radius);padding:1.5rem;text-align:center;cursor:pointer;transition:all .15s}
+.upload-area:hover{border-color:var(--primary);background:var(--primary-light)}
+.upload-area svg{width:32px;height:32px;color:var(--text-3);margin-bottom:8px}
+.upload-area p{font-size:13px;color:var(--text-2)}.upload-area small{font-size:11px;color:var(--text-3)}
+.photo-preview{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.photo-thumb{aspect-ratio:1;border-radius:var(--radius-sm);overflow:hidden;background:var(--surface-2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;position:relative}
+.photo-thumb img{width:100%;height:100%;object-fit:cover}
+.photo-thumb .remove-photo{position:absolute;top:3px;right:3px;width:18px;height:18px;background:rgba(0,0,0,.6);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .15s}
+.photo-thumb:hover .remove-photo{opacity:1}
+.photo-thumb .remove-photo svg{width:10px;height:10px;color:#fff}
+.tabs{display:flex;gap:4px;margin-bottom:1.25rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:4px}
+.tab-btn{flex:1;padding:7px 10px;border-radius:var(--radius-sm);border:none;background:transparent;cursor:pointer;font-size:12px;font-weight:600;color:var(--text-2);font-family:inherit;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:5px}
+.tab-btn svg{width:14px;height:14px}
+.tab-btn.active{background:var(--surface);color:var(--primary-dark);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.students-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.sv-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1rem;cursor:pointer;transition:all .15s}
+.sv-card:hover{border-color:var(--primary);box-shadow:0 4px 12px rgba(0,0,0,.1);transform:translateY(-1px)}
+.sv-card-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.avatar.green{background:var(--primary-light);color:var(--primary-dark)}.avatar.blue{background:var(--info-light);color:#1e40af}.avatar.amber{background:var(--warning-light);color:#92400e}.avatar.red{background:var(--danger-light);color:#991b1b}
+.sv-name{font-weight:600;font-size:14px}.sv-meta{font-size:12px;color:var(--text-2)}
+.progress-items{display:flex;flex-wrap:wrap;gap:6px}
+.progress-item{display:flex;align-items:center;gap:4px;font-size:11px;font-weight:500}
+.progress-item svg{width:13px;height:13px}
+.progress-item.done{color:var(--primary-dark)}.progress-item.warn{color:var(--warning)}.progress-item.miss{color:var(--text-3)}
+.week-nav{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem}
+.week-nav-btn{width:30px;height:30px;border-radius:50%;border:1px solid var(--border-2);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.week-nav-btn svg{width:14px;height:14px}
+.week-label{font-size:14px;font-weight:600}
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:600px;max-height:85vh;display:flex;flex-direction:column;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);flex-shrink:0}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.modal-close svg{width:14px;height:14px}
+.modal-body{overflow-y:auto;padding:1.5rem;flex:1}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
+.evidence-section{margin-bottom:1.25rem}
+.evidence-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.evidence-title svg{width:14px;height:14px}
+.evidence-item{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px}
+.evidence-item-title{font-weight:600;font-size:13px;margin-bottom:3px}
+.evidence-item-desc{font-size:12px;color:var(--text-2);line-height:1.5}
+.evidence-item-meta{font-size:11px;color:var(--text-3);margin-top:5px}
+.evidence-photos{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.evidence-photo{width:70px;height:70px;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);cursor:pointer}
+.evidence-photo img{width:100%;height:100%;object-fit:cover}
+.auth-wrapper{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:1rem}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem;width:100%;max-width:420px;box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.auth-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;color:var(--primary);margin-bottom:6px}
+.auth-logo svg{width:30px;height:30px}
+.auth-sub{font-size:13px;color:var(--text-2);margin-bottom:1.5rem}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem}
+.auth-tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--text-2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.auth-tab.active{color:var(--primary);border-bottom-color:var(--primary)}
+.toast-container{position:fixed;top:70px;right:1rem;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--text);color:#fff;padding:10px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;box-shadow:0 4px 12px rgba(0,0,0,.1);display:flex;align-items:center;gap:8px;pointer-events:all;animation:slideIn .2s ease;max-width:320px}
+.toast svg{width:16px;height:16px;flex-shrink:0}
+.toast.success{background:var(--primary)}.toast.error{background:var(--danger)}.toast.warning{background:var(--warning)}
+@keyframes slideIn{from{transform:translateX(30px);opacity:0}to{transform:translateX(0);opacity:1}}
+.history-list{display:flex;flex-direction:column;gap:8px}
+.history-item{display:flex;gap:12px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius)}
+.history-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.history-content .h-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.history-content .h-desc{font-size:12px;color:var(--text-2)}
+.history-content .h-meta{font-size:11px;color:var(--text-3);margin-top:3px}
+.pending-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)}
+.pending-card{text-align:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2.5rem 2rem;max-width:400px}
+.pending-card svg{width:48px;height:48px;color:var(--warning);margin-bottom:1rem}
+.pending-card h2{font-size:18px;font-weight:700;margin-bottom:8px}
+.pending-card p{font-size:13px;color:var(--text-2);margin-bottom:1.5rem}
+.spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(255,255,255,.7);z-index:300;align-items:center;justify-content:center;flex-direction:column;gap:10px}
+.loading-overlay.show{display:flex}
+.loading-overlay p{font-size:13px;font-weight:500;color:var(--text-2)}
+.empty-state{text-align:center;padding:3rem 1rem;color:var(--text-2)}
+.empty-state svg{width:40px;height:40px;color:var(--border-2);margin-bottom:10px}
+.empty-state p{font-size:13px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+@media(max-width:768px){
+  .sidebar{display:none}
+  .content{margin-left:0;padding:.75rem;padding-bottom:80px}
+  .metrics-grid{grid-template-columns:repeat(2,1fr)}
+  .students-grid{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .topbar{padding:0 1rem}
+  .user-pill span{display:none}
+  .two-col{grid-template-columns:1fr}
+}
+.bottom-nav{display:none}
+.hidden{display:none!important}
+.sidebar-visible{display:flex}
+@media(max-width:768px){
+  .sidebar-visible{display:none!important}
+  .bottom-nav:not(.hidden){display:flex!important;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);z-index:100;height:60px}
+  .bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;font-size:10px;font-weight:500;color:var(--text-3);padding:8px 4px;border:none;background:none;font-family:inherit}
+  .bnav-item.active{color:var(--primary)}
+  .bnav-item svg{width:20px;height:20px}
+}
+</style>
+</head>
+<body>
+<div class="toast-container" id="toastContainer"></div>
+<div class="loading-overlay" id="loadingOverlay"><div class="spinner"></div><p id="loadingText">Đang xử lý...</p></div>
+
+<!-- AUTH -->
+<div id="authScreen">
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>InternTrack</div>
+      <div class="auth-sub">Hệ thống Quản lý Thực tập Sinh viên</div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" onclick="switchAuthTab('login')">Đăng nhập</div>
+        <div class="auth-tab" onclick="switchAuthTab('register')">Đăng ký tài khoản</div>
+      </div>
+      <div id="loginForm">
+        <div class="form-group" style="margin-bottom:12px"><label class="form-label">Email <span class="req">*</span></label><input class="form-control" type="email" id="loginEmail" placeholder="email@example.com"></div>
+        <div class="form-group" style="margin-bottom:16px"><label class="form-label">Mật khẩu <span class="req">*</span></label><input class="form-control" type="password" id="loginPassword" placeholder="Tối thiểu 6 ký tự" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doLogin()">Đăng nhập hệ thống</button>
+      </div>
+      <div id="registerForm" style="display:none">
+        <div class="form-group" style="margin-bottom:12px"><label class="form-label">Vai trò</label><select class="form-control" id="regRole" onchange="toggleRegFields()"><option value="lecturer">Giảng viên hướng dẫn</option><option value="student">Sinh viên thực tập</option></select></div>
+        <div class="form-group" style="margin-bottom:12px"><label class="form-label">Họ và tên <span class="req">*</span></label><input class="form-control" type="text" id="regName" placeholder="Nguyễn Văn A"></div>
+        <div id="studentFields" style="display:none">
+          <div class="form-group" style="margin-bottom:12px"><label class="form-label">Giảng viên hướng dẫn <span class="req">*</span></label><select class="form-control" id="regLecturer"><option value="">-- Chọn giảng viên --</option></select></div>
+          <div class="form-grid" style="margin-bottom:12px">
+            <div class="form-group"><label class="form-label">MSSV <span class="req">*</span></label><input class="form-control" type="text" id="regStudentId" placeholder="VD: SV2024001"></div>
+            <div class="form-group"><label class="form-label">Lớp <span class="req">*</span></label><input class="form-control" type="text" id="regClass" placeholder="VD: QTKD22A"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:12px"><label class="form-label">Tên doanh nghiệp <span class="req">*</span></label><input class="form-control" type="text" id="regCompany" placeholder="Tên công ty / tổ chức"></div>
+        </div>
+        <div class="form-grid" style="margin-bottom:16px">
+          <div class="form-group"><label class="form-label">Email <span class="req">*</span></label><input class="form-control" type="email" id="regEmail" placeholder="email@example.com"></div>
+          <div class="form-group"><label class="form-label">Mật khẩu <span class="req">*</span></label><input class="form-control" type="password" id="regPassword" placeholder="Tối thiểu 6 ký tự"></div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="doRegister()">Tạo tài khoản</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PENDING -->
+<div id="pendingScreen" style="display:none">
+  <div class="pending-screen"><div class="pending-card">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+    <h2>Đang chờ phê duyệt</h2>
+    <p>Tài khoản của bạn đã được tạo thành công. Giảng viên hướng dẫn sẽ xem xét và phê duyệt trong thời gian sớm nhất.</p>
+    <button class="btn btn-secondary" onclick="doLogout()">Đăng xuất</button>
+  </div></div>
+</div>
+
+<!-- APP -->
+<div id="appScreen" style="display:none">
+  <div class="topbar">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>InternTrack</div>
+    <span class="db-indicator" id="dbIndicator">Kết nối...</span>
+    <div class="topbar-right">
+      <div class="user-pill"><div class="avatar-sm" id="topAvatarSm">?</div><span id="topUserName">...</span></div>
+      <button class="btn btn-secondary btn-sm" onclick="doLogout()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Đăng xuất</button>
+    </div>
+  </div>
+  <div class="layout">
+    <!-- GV Sidebar -->
+    <div class="sidebar hidden" id="sidebarGV">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Tổng quan</div>
+        <div class="nav-item active" onclick="navTo('gv-dashboard','sidebarGV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-label">Quản lý</div>
+        <div class="nav-item" onclick="navTo('gv-students','sidebarGV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Sinh viên<span class="nav-badge" id="pendingBadge" style="display:none">0</span></div>
+        <div class="nav-item" onclick="navTo('gv-report','sidebarGV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Báo cáo tuần</div>
+        <div class="nav-item" id="nav-admin" style="display:none" onclick="navTo('gv-admin','sidebarGV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/><circle cx="19" cy="18" r="3"/><line x1="19" y1="15" x2="19" y2="21"/><line x1="16" y1="18" x2="22" y2="18"/></svg>Quản trị viên</div>
+      </div>
+    </div>
+    <!-- SV Sidebar -->
+    <div class="sidebar hidden" id="sidebarSV">
+      <div class="sidebar-section">
+        <div class="sidebar-label">Của tôi</div>
+        <div class="nav-item active" onclick="navTo('sv-dashboard','sidebarSV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Trang chủ</div>
+        <div class="nav-item" onclick="navTo('sv-checkin','sidebarSV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Check-in</div>
+        <div class="nav-item" onclick="navTo('sv-submit','sidebarSV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Nộp minh chứng</div>
+        <div class="nav-item" onclick="navTo('sv-history','sidebarSV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lịch sử</div>
+      </div>
+    </div>
+    <div class="content" id="mainContent">
+      <!-- GV Dashboard -->
+      <div class="page active" id="page-gv-dashboard">
+        <div class="page-header" style="margin-bottom:1.25rem"><div class="page-title">Tổng quan</div><div class="page-sub" id="gvWeekLabel"></div></div>
+        <div id="gvAlerts"></div>
+        <div class="metrics-grid" id="gvMetrics"></div>
+        <div class="two-col">
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:10px">Chưa check-in tuần này</div><div class="table-wrap" id="gvMissingList"></div></div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:10px">Chờ duyệt tài khoản</div><div class="table-wrap" id="gvPendingList"></div></div>
+        </div>
+      </div>
+      <!-- GV Students -->
+      <div class="page" id="page-gv-students">
+        <div class="page-header" style="margin-bottom:1.25rem"><div class="page-title">Danh sách sinh viên</div><div class="page-sub">Quản lý và xem minh chứng</div></div>
+        <div id="svCardsContainer" class="students-grid"></div>
+      </div>
+      <!-- GV Report -->
+      <div class="page" id="page-gv-report">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1.25rem">
+          <div><div class="page-title">Báo cáo tuần</div></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="week-nav" style="margin-bottom:0">
+              <button class="week-nav-btn" onclick="changeWeek('report',-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+              <span class="week-label" id="reportWeekLabel"></span>
+              <button class="week-nav-btn" onclick="changeWeek('report',1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+            </div>
+            <button class="btn btn-primary" onclick="exportExcel()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Xuất Excel</button>
+          </div>
+        </div>
+        <div class="table-wrap" style="overflow-x:auto"><table id="reportTable"><thead><tr><th style="min-width:130px">Sinh viên</th><th style="min-width:120px">Doanh nghiệp</th><th style="min-width:80px">Check-in</th><th style="min-width:160px">Nhiệm vụ</th><th style="min-width:180px">Quá trình</th><th style="min-width:180px">Kết quả</th><th style="min-width:140px">Nhận xét GV</th></tr></thead><tbody id="reportBody"></tbody></table></div>
+      </div>
+      <!-- GV Admin Page -->
+      <div class="page" id="page-gv-admin">
+        <div class="page-header" style="margin-bottom:1.25rem">
+          <div class="page-title">Quản trị viên</div>
+          <div class="page-sub">Quản lý tất cả tài khoản giảng viên trong hệ thống</div>
+        </div>
+        <div class="alert info" style="margin-bottom:1.25rem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+          <div>Trang này chỉ hiển thị với tài khoản được chỉ định là <strong>Quản trị viên</strong>. Bạn có thể xóa tài khoản giảng viên khác ra khỏi hệ thống.</div>
+        </div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Danh sách giảng viên</div>
+        <div class="table-wrap" id="adminLecturerList"></div>
+      </div>
+
+      <!-- SV Dashboard -->
+      <div class="page" id="page-sv-dashboard">
+        <div class="page-header" style="margin-bottom:1.25rem"><div class="page-title" id="svWelcome">Xin chào!</div><div class="page-sub" id="svCompanyLabel"></div></div>
+        <div id="svAlerts"></div>
+        <div class="metrics-grid" id="svMetrics" style="grid-template-columns:repeat(2,1fr)"></div>
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px;margin-top:1.5rem">Trạng thái minh chứng tuần này</div>
+        <div class="card" id="svStatusCard"></div>
+        <div id="svCommentSection" style="margin-top:1.25rem;display:none"><div style="font-size:13px;font-weight:700;margin-bottom:10px">Nhận xét từ giảng viên</div><div class="card" id="svLatestComment"></div></div>
+      </div>
+      <!-- SV Check-in -->
+      <div class="page" id="page-sv-checkin">
+        <div class="page-header" style="margin-bottom:1.25rem"><div class="page-title">Check-in tại doanh nghiệp</div></div>
+        <div class="card">
+          <div class="form-group" style="margin-bottom:14px">
+            <label class="form-label">Ảnh minh chứng <span class="req">*</span></label>
+            <div class="upload-area" onclick="document.getElementById('checkinFileInput').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg><p><strong>Chụp ảnh</strong> hoặc <strong>chọn từ thư viện</strong></p><small>Tối đa 5 ảnh</small></div>
+            <input type="file" id="checkinFileInput" accept="image/*" multiple capture="environment" style="display:none" onchange="handleFiles(event,'checkin')">
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('checkinFileInput').click()">Chụp ảnh</button>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('checkinGalleryInput').click()">Thư viện</button>
+            </div>
+            <input type="file" id="checkinGalleryInput" accept="image/*" multiple style="display:none" onchange="handleFiles(event,'checkin')">
+            <div class="photo-preview" id="checkinPreview"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label class="form-label">Ghi chú <span class="req">*</span> <span style="color:var(--text-3);font-weight:400">(tối thiểu 20 ký tự)</span></label>
+            <textarea class="form-control" id="checkinNote" rows="3" placeholder="Hôm nay bắt đầu lúc mấy giờ, làm việc tại khu vực nào..." oninput="document.getElementById('checkinCount').textContent=this.value.length+' / 20'"></textarea>
+            <div class="form-hint" id="checkinCount">0 / 20</div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitEvidence('checkin')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Gửi check-in</button>
+        </div>
+      </div>
+      <!-- SV Submit -->
+      <div class="page" id="page-sv-submit">
+        <div class="page-header" style="margin-bottom:1.25rem"><div class="page-title">Nộp minh chứng</div></div>
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab(this,'task_assigned')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>Giao nhiệm vụ</button>
+          <button class="tab-btn" onclick="switchTab(this,'task_progress')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Quá trình</button>
+          <button class="tab-btn" onclick="switchTab(this,'task_result')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Kết quả</button>
+        </div>
+        <div class="card">
+          <div class="form-group" style="margin-bottom:12px"><label class="form-label">Tên nhiệm vụ <span class="req">*</span></label><input class="form-control" type="text" id="submitTitle" placeholder="VD: Phân tích dữ liệu khách hàng tháng 5"></div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label" id="submitDescLabel">Mô tả <span class="req">*</span> <span style="color:var(--text-3);font-weight:400">(tối thiểu 30 ký tự)</span></label>
+            <textarea class="form-control" id="submitDesc" rows="4" placeholder="Mô tả chi tiết..." oninput="document.getElementById('submitCount').textContent=this.value.length+' / 30'"></textarea>
+            <div class="form-hint" id="submitCount">0 / 30</div>
+          </div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label class="form-label">Ảnh minh chứng <span class="req">*</span></label>
+            <div class="upload-area" onclick="document.getElementById('submitFileInput').click()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><p><strong>Chụp ảnh</strong> hoặc <strong>chọn từ thư viện</strong></p><small>Tối đa 5 ảnh</small></div>
+            <input type="file" id="submitFileInput" accept="image/*" multiple capture="environment" style="display:none" onchange="handleFiles(event,'submit')">
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('submitFileInput').click()">Chụp ảnh</button>
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('submitGalleryInput').click()">Thư viện</button>
+            </div>
+            <input type="file" id="submitGalleryInput" accept="image/*" multiple style="display:none" onchange="handleFiles(event,'submit')">
+            <div class="photo-preview" id="submitPreview"></div>
+          </div>
+          <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="submitEvidence(currentSubmitType)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>Nộp minh chứng</button>
+        </div>
+      </div>
+      <!-- SV History -->
+      <div class="page" id="page-sv-history">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:1.25rem">
+          <div><div class="page-title">Lịch sử nộp</div></div>
+          <div class="week-nav" style="margin-bottom:0">
+            <button class="week-nav-btn" onclick="changeWeek('history',-1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg></button>
+            <span class="week-label" id="historyWeekLabel"></span>
+            <button class="week-nav-btn" onclick="changeWeek('history',1)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg></button>
+          </div>
+        </div>
+        <div id="historyList" class="history-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav GV -->
+<div class="bottom-nav hidden" id="bottomNavGV">
+  <button class="bnav-item active" onclick="navTo('gv-dashboard','sidebarGV',null);setBottomActive('bottomNavGV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</button>
+  <button class="bnav-item" onclick="navTo('gv-students','sidebarGV',null);setBottomActive('bottomNavGV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Sinh viên</button>
+  <button class="bnav-item" onclick="navTo('gv-report','sidebarGV',null);setBottomActive('bottomNavGV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Báo cáo</button>
+  <button class="bnav-item" id="bnav-admin" style="display:none" onclick="navTo('gv-admin','sidebarGV',null);setBottomActive('bottomNavGV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 10-16 0"/></svg>Quản trị</button>
+</div>
+
+<!-- Bottom Nav SV -->
+<div class="bottom-nav hidden" id="bottomNavSV">
+  <button class="bnav-item active" onclick="navTo('sv-dashboard','sidebarSV',null);setBottomActive('bottomNavSV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Trang chủ</button>
+  <button class="bnav-item" onclick="navTo('sv-checkin','sidebarSV',null);setBottomActive('bottomNavSV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>Check-in</button>
+  <button class="bnav-item" onclick="navTo('sv-submit','sidebarSV',null);setBottomActive('bottomNavSV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>Nộp MC</button>
+  <button class="bnav-item" onclick="navTo('sv-history','sidebarSV',null);setBottomActive('bottomNavSV',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Lịch sử</button>
+</div>
+
+<!-- MODAL: Student Detail -->
+<div class="modal-backdrop" id="studentDetailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px"><div class="avatar green" id="modalAvatar">AB</div><div><div class="modal-title" id="modalStudentName"></div><div style="font-size:12px;color:var(--text-2)" id="modalStudentMeta"></div></div></div>
+      <button class="modal-close" onclick="closeModal('studentDetailModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer">
+      <div style="flex:1"><textarea class="form-control" id="commentInput" placeholder="Nhận xét của giảng viên..." rows="2" style="min-height:60px"></textarea></div>
+      <button class="btn btn-primary" onclick="saveComment()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13"/><polyline points="7 3 7 8 15 8"/></svg>Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== FIREBASE CONFIG =====
+const FB_CFG = {
+  apiKey:"AIzaSyC4cMYHQCBIipOHLgxNkgnBm5cSmTZ16Ms",
+  authDomain:"interntrack-dongau.firebaseapp.com",
+  projectId:"interntrack-dongau",
+  storageBucket:"interntrack-dongau.firebasestorage.app",
+  messagingSenderId:"633022121812",
+  appId:"1:633022121812:web:1e6bfc59488686ad30eac1"
+};
+let fb=null, fbAuth=null, fbDb=null, FM=false;
+
+async function initFB() {
+  try {
+    const {initializeApp}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js");
+    const {getAuth,createUserWithEmailAndPassword:cup,signInWithEmailAndPassword:sip,signOut:so}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js");
+    const {getFirestore,doc,setDoc,getDoc,getDocs,collection,query,where,serverTimestamp:st}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+    const app=initializeApp(FB_CFG);
+    fbAuth=getAuth(app); fbDb=getFirestore(app);
+    fb={cup,sip,so,doc,setDoc,getDoc,getDocs,collection,query,where,st};
+    FM=true;
+    const ind=document.getElementById('dbIndicator');
+    ind.textContent='Firebase'; ind.className='db-indicator live';
+  } catch(e){ console.warn('FB fail:',e.message); document.getElementById('dbIndicator').textContent='Offline'; }
+}
+
+// ===== STATE =====
+let CU=null, currentSubmitType='task_assigned', currentDetailUID=null;
+let reportWeekOff=0, historyWeekOff=0;
+let selFiles={checkin:[],submit:[]};
+
+// ===== UTILS =====
+function isoWeek(d){const dt=new Date(d);dt.setHours(0,0,0,0);dt.setDate(dt.getDate()+3-(dt.getDay()+6)%7);const w1=new Date(dt.getFullYear(),0,4);return 1+Math.round(((dt-w1)/86400000-3+(w1.getDay()+6)%7)/7)}
+function curWeek(){return isoWeek(new Date())}
+function curYear(){return new Date().getFullYear()}
+function weekDates(w,y){const s=new Date(y,0,1+(w-1)*7),dow=s.getDay(),mon=new Date(s);mon.setDate(s.getDate()-(dow<=4?dow-1:dow-8));const sun=new Date(mon);sun.setDate(mon.getDate()+6);const f=d=>`${d.getDate().toString().padStart(2,'0')}/${(d.getMonth()+1).toString().padStart(2,'0')}`;return{start:f(mon),end:f(sun)}}
+function offWeek(base,yr,off){let w=base+off,y=yr;if(w>52){w-=52;y++}else if(w<1){w+=52;y--}return{w,y}}
+function initials(n){return n.split(' ').slice(-2).map(x=>x[0]).join('').toUpperCase()}
+function avColor(n){return['green','blue','amber','red'][n.charCodeAt(0)%4]}
+function fmtTime(d){if(!d)return'';const dt=d instanceof Date?d:new Date(d);return`${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')} ${dt.getHours().toString().padStart(2,'0')}:${dt.getMinutes().toString().padStart(2,'0')}`}
+const typeLabel={checkin:'Check-in',task_assigned:'Giao nhiệm vụ',task_progress:'Quá trình',task_result:'Kết quả'};
+const typeColor={checkin:'green',task_assigned:'blue',task_progress:'amber',task_result:'red'};
+const typeDot={checkin:'#16a87c',task_assigned:'#2563eb',task_progress:'#d97706',task_result:'#dc2626'};
+
+function showToast(msg,type='success'){const icons={success:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>',error:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',warning:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>'};const t=document.createElement('div');t.className=`toast ${type}`;t.innerHTML=(icons[type]||'')+msg;document.getElementById('toastContainer').appendChild(t);setTimeout(()=>t.remove(),3500)}
+function showLoad(msg='Đang xử lý...'){document.getElementById('loadingText').textContent=msg;document.getElementById('loadingOverlay').classList.add('show')}
+function hideLoad(){document.getElementById('loadingOverlay').classList.remove('show')}
+
+// ===== AUTH =====
+function switchAuthTab(t){document.getElementById('loginForm').style.display=t==='login'?'block':'none';document.getElementById('registerForm').style.display=t==='register'?'block':'none';document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')))}
+
+function toggleRegFields(){const r=document.getElementById('regRole').value;document.getElementById('studentFields').style.display=r==='student'?'block':'none';if(r==='student')loadLecturers()}
+
+async function loadLecturers(){
+  const sel=document.getElementById('regLecturer');
+  sel.innerHTML='<option value="">-- Đang tải... --</option>';
+  let list=[];
+  if(FM){try{const s=await fb.getDocs(fb.query(fb.collection(fbDb,'users'),fb.where('role','==','lecturer'),fb.where('status','==','approved')));list=s.docs.map(d=>d.data())}catch(e){}}
+  list=list.filter(l=>l.status!=='deleted');
+  sel.innerHTML=list.length
+    ?'<option value="">-- Chọn giảng viên --</option>'+list.map(l=>`<option value="${l.uid}">${l.fullName}</option>`).join('')
+    :'<option value="">-- Chưa có giảng viên nào --</option>';
+}
+
+function afterLogin(){
+  document.getElementById('authScreen').style.display='none';
+  document.getElementById('pendingScreen').style.display='none';
+  if(CU.status==='pending'){document.getElementById('pendingScreen').style.display='block';return}
+  document.getElementById('appScreen').style.display='block';
+  document.getElementById('topUserName').textContent=CU.fullName.split(' ').slice(-2).join(' ');
+  document.getElementById('topAvatarSm').textContent=initials(CU.fullName);
+  if(CU.role==='lecturer'){
+    document.getElementById('sidebarGV').classList.remove('hidden');
+    document.getElementById('sidebarSV').classList.add('hidden');
+    document.getElementById('bottomNavGV').classList.remove('hidden');
+    document.getElementById('bottomNavSV').classList.add('hidden');
+    // Kiểm tra admin
+    if(CU.isAdmin){
+      document.getElementById('nav-admin').style.display='flex';
+      document.getElementById('bnav-admin').style.display='flex';
+    }
+    renderGVDashboard();
+  } else {
+    document.getElementById('sidebarSV').classList.remove('hidden');
+    document.getElementById('sidebarGV').classList.add('hidden');
+    document.getElementById('bottomNavSV').classList.remove('hidden');
+    document.getElementById('bottomNavGV').classList.add('hidden');
+    renderSVDashboard();
+  }
+  updateWeekLabels();
+}
+
+async function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  const pass=document.getElementById('loginPassword').value;
+  if(!email||!pass){showToast('Vui lòng nhập email và mật khẩu','error');return}
+  showLoad('Đang đăng nhập...');
+  try{
+    const cred=await fb.sip(fbAuth,email,pass);
+    const snap=await fb.getDoc(fb.doc(fbDb,'users',cred.user.uid));
+    if(!snap.exists()){hideLoad();showToast('Không tìm thấy tài khoản','error');return}
+    CU={uid:cred.user.uid,...snap.data()};
+    hideLoad();afterLogin();
+  }catch(e){hideLoad();showToast('Email hoặc mật khẩu không đúng','error')}
+}
+
+async function doRegister(){
+  const role=document.getElementById('regRole').value;
+  const name=document.getElementById('regName').value.trim();
+  const email=document.getElementById('regEmail').value.trim();
+  const pass=document.getElementById('regPassword').value;
+  if(!name||!email||!pass){showToast('Vui lòng điền đầy đủ','error');return}
+  if(pass.length<6){showToast('Mật khẩu tối thiểu 6 ký tự','error');return}
+  let studentId='',className='',companyName='',lecturerUid='';
+  if(role==='student'){
+    lecturerUid=document.getElementById('regLecturer').value;
+    studentId=document.getElementById('regStudentId').value.trim();
+    className=document.getElementById('regClass').value.trim();
+    companyName=document.getElementById('regCompany').value.trim();
+    if(!lecturerUid){showToast('Vui lòng chọn giảng viên','error');return}
+    if(!studentId||!className||!companyName){showToast('Vui lòng điền đầy đủ thông tin sinh viên','error');return}
+  }
+  showLoad('Đang tạo tài khoản...');
+  try{
+    const cred=await fb.cup(fbAuth,email,pass);
+    const data={uid:cred.user.uid,email,fullName:name,studentId,className,companyName,lecturerUid,role,status:role==='lecturer'?'approved':'pending',createdAt:fb.st()};
+    await fb.setDoc(fb.doc(fbDb,'users',cred.user.uid),data);
+    CU={...data};hideLoad();showToast('Đăng ký thành công!');afterLogin();
+  }catch(e){hideLoad();showToast(e.code==='auth/email-already-in-use'?'Email đã tồn tại':'Lỗi: '+e.message,'error')}
+}
+
+async function doLogout(){
+  try{await fb.so(fbAuth)}catch(e){}
+  CU=null;
+  document.getElementById('authScreen').style.display='block';
+  document.getElementById('appScreen').style.display='none';
+  document.getElementById('pendingScreen').style.display='none';
+  document.getElementById('loginEmail').value='';
+  document.getElementById('loginPassword').value='';
+  selFiles={checkin:[],submit:[]};
+}
+
+// ===== NAV =====
+function navTo(pageId,sidebarId,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const p=document.getElementById('page-'+pageId);if(p)p.classList.add('active');
+  document.querySelectorAll(`#${sidebarId} .nav-item`).forEach(n=>n.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(pageId==='gv-dashboard')renderGVDashboard();
+  if(pageId==='gv-students')renderStudentCards();
+  if(pageId==='gv-report')renderReport();
+  if(pageId==='gv-admin')renderAdminPanel();
+  if(pageId==='sv-dashboard')renderSVDashboard();
+  if(pageId==='sv-history')renderHistory();
+}
+
+function updateWeekLabels(){
+  const w=curWeek(),y=curYear();
+  const rw=offWeek(w,y,reportWeekOff),hw=offWeek(w,y,historyWeekOff);
+  const rd=weekDates(rw.w,rw.y),hd=weekDates(hw.w,hw.y);
+  document.getElementById('reportWeekLabel').textContent=`Tuần ${rw.w} (${rd.start}–${rd.end}/${rw.y})`;
+  document.getElementById('historyWeekLabel').textContent=`Tuần ${hw.w} (${hd.start}–${hd.end}/${hw.y})`;
+  document.getElementById('gvWeekLabel').textContent=`Tuần ${w} năm ${y}`;
+}
+
+function changeWeek(type,d){if(type==='report'){reportWeekOff+=d;if(type==='report')renderReport()}else{historyWeekOff+=d;renderHistory()}updateWeekLabels()}
+
+// ===== FIREBASE DATA HELPERS =====
+async function fetchStudents(status){
+  const q=status
+    ?fb.query(fb.collection(fbDb,'users'),fb.where('role','==','student'),fb.where('lecturerUid','==',CU.uid),fb.where('status','==',status))
+    :fb.query(fb.collection(fbDb,'users'),fb.where('role','==','student'),fb.where('lecturerUid','==',CU.uid));
+  const s=await fb.getDocs(q);
+  return s.docs.map(d=>d.data()).filter(u=>u.status!=='deleted');
+}
+
+async function fetchEvidence(filters={}){
+  let q=fb.collection(fbDb,'evidence');
+  const constraints=[fb.where('weekNumber','==',filters.wn||curWeek()),fb.where('weekYear','==',filters.wy||curYear())];
+  if(filters.uid)constraints.push(fb.where('uid','==',filters.uid));
+  q=fb.query(q,...constraints);
+  const s=await fb.getDocs(q);
+  return s.docs.map(d=>{const dat=d.data();return{...dat,submittedAt:dat.submittedAt?.toDate?dat.submittedAt.toDate():new Date()}});
+}
+
+async function fetchAllEvidenceForStudent(uid){
+  const s=await fb.getDocs(fb.query(fb.collection(fbDb,'evidence'),fb.where('uid','==',uid)));
+  return s.docs.map(d=>{const dat=d.data();return{...dat,submittedAt:dat.submittedAt?.toDate?dat.submittedAt.toDate():new Date()}});
+}
+
+async function fetchComments(){
+  const s=await fb.getDocs(fb.query(fb.collection(fbDb,'comments'),fb.where('lecturerUid','==',CU.uid)));
+  const m={};s.docs.forEach(d=>{m[d.data().studentUid]=d.data().text});return m;
+}
+
+// ===== GV DASHBOARD =====
+async function renderGVDashboard(){
+  const wn=curWeek(),wy=curYear();
+  showLoad('Đang tải...');
+  const [approved,pending,weekEv]=await Promise.all([fetchStudents('approved'),fetchStudents('pending'),fetchEvidence({wn,wy})]);
+  hideLoad();
+  const myUids=new Set(approved.map(s=>s.uid));
+  const myEv=weekEv.filter(e=>myUids.has(e.uid));
+  const checkedIn=new Set(myEv.filter(e=>e.type==='checkin').map(e=>e.uid));
+  const missing=approved.filter(sv=>!checkedIn.has(sv.uid));
+
+  document.getElementById('gvMetrics').innerHTML=`
+    <div class="metric-card blue"><div class="metric-val">${approved.length}</div><div class="metric-lbl">Sinh viên đang TT</div></div>
+    <div class="metric-card green"><div class="metric-val">${checkedIn.size}</div><div class="metric-lbl">Đã check-in tuần này</div></div>
+    <div class="metric-card red"><div class="metric-val">${missing.length}</div><div class="metric-lbl">Chưa check-in</div></div>
+    <div class="metric-card"><div class="metric-val">${myEv.length}</div><div class="metric-lbl">Minh chứng đã nộp</div></div>`;
+
+  document.getElementById('gvAlerts').innerHTML=missing.length>0
+    ?`<div class="alert warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg><div><strong>${missing.length} sinh viên</strong> chưa check-in: ${missing.map(s=>s.fullName).join(', ')}</div></div>`:'';
+
+  document.getElementById('gvMissingList').innerHTML=missing.length===0
+    ?'<div class="empty-state" style="padding:1.5rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg><p>Tất cả đã check-in</p></div>'
+    :`<table><thead><tr><th>Sinh viên</th><th>Doanh nghiệp</th></tr></thead><tbody>${missing.map(sv=>`<tr><td><strong>${sv.fullName}</strong><div style="font-size:11px;color:var(--text-3)">${sv.studentId||''}</div></td><td>${sv.companyName||''}</td></tr>`).join('')}</tbody></table>`;
+
+  document.getElementById('gvPendingList').innerHTML=pending.length===0
+    ?'<div class="empty-state" style="padding:1.5rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg><p>Không có yêu cầu mới</p></div>'
+    :`<table><thead><tr><th>Sinh viên</th><th>Thao tác</th></tr></thead><tbody>${pending.map(sv=>`<tr><td><strong>${sv.fullName}</strong><div style="font-size:11px;color:var(--text-3)">${sv.studentId||''} · ${sv.companyName||''}</div></td><td><div style="display:flex;gap:6px"><button class="btn btn-primary btn-sm" onclick="approveUser('${sv.uid}',true)">Duyệt</button><button class="btn btn-danger btn-sm" onclick="approveUser('${sv.uid}',false)">Từ chối</button></div></td></tr>`).join('')}</tbody></table>`;
+
+  const badge=document.getElementById('pendingBadge');
+  badge.style.display=pending.length>0?'flex':'none';badge.textContent=pending.length;
+}
+
+async function approveUser(uid,approve){
+  await fb.setDoc(fb.doc(fbDb,'users',uid),{status:approve?'approved':'rejected'},{merge:true});
+  showToast(approve?'Đã duyệt tài khoản':'Đã từ chối tài khoản',approve?'success':'warning');
+  renderGVDashboard();
+}
+
+// Xóa sinh viên (giảng viên thực hiện)
+async function deleteStudent(uid, name){
+  if(!confirm(`Xác nhận xóa sinh viên "${name}"?
+Dữ liệu minh chứng sẽ bị xóa vĩnh viễn.`)) return;
+  showLoad('Đang xóa...');
+  try {
+    await fb.setDoc(fb.doc(fbDb,'users',uid),{status:'deleted',deletedAt:fb.st()},{merge:true});
+    hideLoad();
+    showToast('Đã xóa sinh viên '+name);
+    renderStudentCards();
+  } catch(e){ hideLoad(); showToast('Lỗi: '+e.message,'error'); }
+}
+
+// Xóa giảng viên (chỉ admin)
+async function deleteLecturer(uid, name){
+  if(!confirm(`Xác nhận xóa tài khoản giảng viên "${name}"?`)) return;
+  showLoad('Đang xóa...');
+  try {
+    await fb.setDoc(fb.doc(fbDb,'users',uid),{status:'deleted',deletedAt:fb.st()},{merge:true});
+    hideLoad();
+    showToast('Đã xóa tài khoản '+name);
+    renderAdminPanel();
+  } catch(e){ hideLoad(); showToast('Lỗi: '+e.message,'error'); }
+}
+
+// Admin: xem tất cả giảng viên
+async function renderAdminPanel(){
+  const container = document.getElementById('adminLecturerList');
+  if(!container) return;
+  const snap = await fb.getDocs(fb.query(fb.collection(fbDb,'users'),fb.where('role','==','lecturer')));
+  const lecturers = snap.docs.map(d=>d.data()).filter(u=>u.status!=='deleted');
+  if(!lecturers.length){ container.innerHTML='<div class="empty-state" style="padding:1.5rem"><p>Chưa có giảng viên nào</p></div>'; return; }
+  container.innerHTML=`<table><thead><tr><th>Giảng viên</th><th>Email</th><th>Thao tác</th></tr></thead><tbody>${
+    lecturers.map(l=>`<tr>
+      <td><strong>${l.fullName}</strong>${l.uid===CU.uid?'<span class="badge blue" style="margin-left:6px">Bạn</span>':''}</td>
+      <td style="font-size:12px">${l.email}</td>
+      <td>${l.uid===CU.uid?'<span style="font-size:12px;color:var(--text-3)">—</span>':`<button class="btn btn-danger btn-sm" onclick="deleteLecturer('${l.uid}','${l.fullName}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Xóa</button>`}</td>
+    </tr>`).join('')
+  }</tbody></table>`;
+}
+
+// ===== GV STUDENTS =====
+async function renderStudentCards(){
+  const approved=await fetchStudents('approved');
+  const wn=curWeek(),wy=curYear();
+  const container=document.getElementById('svCardsContainer');
+  if(!approved.length){container.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><p>Chưa có sinh viên nào được duyệt</p></div>';return}
+  const weekEv=await fetchEvidence({wn,wy});
+  container.innerHTML=approved.map(sv=>{
+    const ev=weekEv.filter(e=>e.uid===sv.uid);
+    const ci=ev.filter(e=>e.type==='checkin').length,ta=ev.filter(e=>e.type==='task_assigned').length,tp=ev.filter(e=>e.type==='task_progress').length,tr2=ev.filter(e=>e.type==='task_result').length;
+    const ac=avColor(sv.fullName);
+    return`<div class="sv-card">
+      <div class="sv-card-header" onclick="openStudentDetail('${sv.uid}')" style="cursor:pointer;flex:1">
+        <div class="avatar ${ac}">${initials(sv.fullName)}</div>
+        <div><div class="sv-name">${sv.fullName}</div><div class="sv-meta">${sv.companyName||''} · ${sv.studentId||''}</div></div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+        <div class="progress-items" style="flex:1" onclick="openStudentDetail('${sv.uid}')" >
+          <span class="progress-item ${ci>0?'done':'miss'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>${ci}</span>
+          <span class="progress-item ${ta>0?'done':'miss'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/></svg>${ta}</span>
+          <span class="progress-item ${tp>0?'done':'miss'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>${tp}</span>
+          <span class="progress-item ${tr2>0?'done':'miss'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>${tr2}</span>
+        </div>
+        <button class="btn btn-danger btn-sm" style="flex-shrink:0;margin-left:8px" onclick="deleteStudent('${sv.uid}','${sv.fullName}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>Xóa
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function openStudentDetail(uid){
+  currentDetailUID=uid;
+  showLoad('Đang tải minh chứng...');
+  const [svSnap,allEv]=await Promise.all([fb.getDoc(fb.doc(fbDb,'users',uid)),fetchAllEvidenceForStudent(uid)]);
+  const sv=svSnap.exists()?svSnap.data():null;
+  if(!sv){hideLoad();showToast('Không tìm thấy sinh viên','error');return}
+  const wn=curWeek(),wy=curYear(),wd=weekDates(wn,wy);
+  const weekEv=allEv.filter(e=>e.weekNumber===wn&&e.weekYear===wy);
+
+  let comment='';
+  try{const cs=await fb.getDoc(fb.doc(fbDb,'comments',`${CU.uid}_${uid}`));if(cs.exists())comment=cs.data().text||''}catch(e){}
+  hideLoad();
+
+  document.getElementById('modalAvatar').textContent=initials(sv.fullName);
+  document.getElementById('modalAvatar').className=`avatar ${avColor(sv.fullName)}`;
+  document.getElementById('modalStudentName').textContent=sv.fullName;
+  document.getElementById('modalStudentMeta').textContent=`${sv.companyName||''} · Tuần ${wn} (${wd.start}–${wd.end})`;
+  document.getElementById('commentInput').value=comment;
+
+  const secs=[
+    {type:'checkin',label:'Check-in tại doanh nghiệp'},
+    {type:'task_assigned',label:'Nhiệm vụ được giao'},
+    {type:'task_progress',label:'Quá trình thực hiện'},
+    {type:'task_result',label:'Kết quả công việc'}
+  ];
+  document.getElementById('modalBody').innerHTML=secs.map(s=>{
+    const items=weekEv.filter(e=>e.type===s.type);
+    return`<div class="evidence-section">
+      <div class="evidence-title" style="color:var(--text-2)">${s.label} (${items.length})</div>
+      ${!items.length?'<div style="font-size:12px;color:var(--text-3);font-style:italic;padding:6px 0">Chưa có dữ liệu</div>':items.map(e=>`
+        <div class="evidence-item">
+          ${e.title&&e.type!=='checkin'?`<div class="evidence-item-title">${e.title}</div>`:''}
+          <div class="evidence-item-desc">${e.description||''}</div>
+          ${e.photoURLs&&e.photoURLs.filter(p=>p&&p.startsWith('data:')).length>0?`<div class="evidence-photos">${e.photoURLs.filter(p=>p&&p.startsWith('data:')).map(url=>`<div class="evidence-photo" onclick="viewPhoto('${url}')"><img src="${url}"></div>`).join('')}</div>`:''}
+          <div class="evidence-item-meta">${fmtTime(e.submittedAt)}</div>
+        </div>`).join('')}
+    </div>`;
+  }).join('')+(comment?`<div class="alert success" style="margin-top:.5rem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div><strong>Nhận xét hiện tại:</strong> ${comment}</div></div>`:'');
+  openModal('studentDetailModal');
+}
+
+async function saveComment(){
+  const txt=document.getElementById('commentInput').value.trim();
+  if(currentDetailUID){
+    await fb.setDoc(fb.doc(fbDb,'comments',`${CU.uid}_${currentDetailUID}`),{text:txt,lecturerUid:CU.uid,studentUid:currentDetailUID,updatedAt:fb.st()});
+    showToast('Đã lưu nhận xét');
+  }
+  closeModal('studentDetailModal');
+}
+
+function viewPhoto(url){const o=document.createElement('div');o.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;display:flex;align-items:center;justify-content:center;cursor:zoom-out';o.innerHTML=`<img src="${url}" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px"><div style="position:absolute;top:1rem;right:1rem;color:#fff;font-size:28px;cursor:pointer">×</div>`;o.onclick=()=>o.remove();document.body.appendChild(o)}
+
+// ===== GV REPORT =====
+async function renderReport(){
+  const rw=offWeek(curWeek(),curYear(),reportWeekOff);
+  const tbody=document.getElementById('reportBody');
+  tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem"><div class="spinner" style="margin:auto"></div></td></tr>';
+  const [approved,weekEv,comments]=await Promise.all([fetchStudents('approved'),fetchEvidence({wn:rw.w,wy:rw.y}),fetchComments()]);
+  if(!approved.length){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--text-3);padding:2rem">Chưa có sinh viên</td></tr>';return}
+  tbody.innerHTML=approved.map(sv=>{
+    const ev=weekEv.filter(e=>e.uid===sv.uid);
+    const ci=ev.filter(e=>e.type==='checkin').length;
+    const tasks=[...new Set(ev.filter(e=>e.type==='task_assigned').map(e=>e.title))];
+    const prog=ev.filter(e=>e.type==='task_progress').map(e=>(e.description||'').substring(0,80)).join(' | ');
+    const res=ev.filter(e=>e.type==='task_result').map(e=>(e.description||'').substring(0,80)).join(' | ');
+    return`<tr>
+      <td><strong>${sv.fullName}</strong><div style="font-size:11px;color:var(--text-3)">${sv.studentId||''}</div></td>
+      <td style="font-size:12px">${sv.companyName||''}</td>
+      <td style="text-align:center"><span class="badge ${ci===0?'red':'green'}">${ci}</span></td>
+      <td style="font-size:12px">${tasks.length?tasks.map((t,i)=>`${i+1}. ${t}`).join('<br>'):'<span style="color:var(--text-3);font-style:italic">Chưa có</span>'}</td>
+      <td style="font-size:12px">${prog||'<span style="color:var(--text-3);font-style:italic">Chưa có</span>'}</td>
+      <td style="font-size:12px">${res||'<span style="color:var(--text-3);font-style:italic">Chưa có</span>'}</td>
+      <td style="font-size:12px">${comments[sv.uid]||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function exportExcel(){
+  const rw=offWeek(curWeek(),curYear(),reportWeekOff);
+  showLoad('Đang xuất...');
+  const [approved,weekEv,comments]=await Promise.all([fetchStudents('approved'),fetchEvidence({wn:rw.w,wy:rw.y}),fetchComments()]);
+  hideLoad();
+  const header=['STT','Họ tên','MSSV','Lớp','Doanh nghiệp','Số lần check-in','Nhiệm vụ được giao','Mô tả quá trình','Kết quả đạt được','Nhận xét GV'];
+  const rows=approved.map((sv,i)=>{
+    const ev=weekEv.filter(e=>e.uid===sv.uid);
+    return[i+1,sv.fullName,sv.studentId||'',sv.className||'',sv.companyName||'',ev.filter(e=>e.type==='checkin').length,[...new Set(ev.filter(e=>e.type==='task_assigned').map(e=>e.title))].join('; ')||'—',ev.filter(e=>e.type==='task_progress').map(e=>e.description||'').join(' | ')||'—',ev.filter(e=>e.type==='task_result').map(e=>e.description||'').join(' | ')||'—',comments[sv.uid]||'—'];
+  });
+  const csv=[header,...rows].map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`BaoCaoThucTap_Tuan${rw.w}_${rw.y}.csv`;a.click();
+  showToast('Đã xuất báo cáo thành công');
+}
+
+// ===== SV DASHBOARD =====
+async function renderSVDashboard(){
+  if(!CU)return;
+  document.getElementById('svWelcome').textContent=`Xin chào, ${CU.fullName.split(' ').slice(-2).join(' ')}!`;
+  document.getElementById('svCompanyLabel').textContent=`Thực tập tại: ${CU.companyName||''}`;
+  const wn=curWeek(),wy=curYear();
+  const ev=await fetchAllEvidenceForStudent(CU.uid);
+  const weekEv=ev.filter(e=>e.weekNumber===wn&&e.weekYear===wy);
+  const ci=weekEv.filter(e=>e.type==='checkin').length;
+
+  document.getElementById('svMetrics').innerHTML=`
+    <div class="metric-card green"><div class="metric-val">${ci}</div><div class="metric-lbl">Check-in tuần này</div></div>
+    <div class="metric-card blue"><div class="metric-val">${weekEv.length}</div><div class="metric-lbl">Minh chứng đã nộp</div></div>`;
+
+  document.getElementById('svAlerts').innerHTML=ci===0
+    ?'<div class="alert warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/></svg><div>Bạn <strong>chưa check-in</strong> trong tuần này!</div></div>'
+    :`<div class="alert success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg><div>Tốt lắm! Đã check-in <strong>${ci} lần</strong> tuần này.</div></div>`;
+
+  const types=['checkin','task_assigned','task_progress','task_result'];
+  const tnames=['Check-in tại doanh nghiệp','Giao nhiệm vụ','Quá trình thực hiện','Kết quả công việc'];
+  const tcolors=['var(--primary)','var(--info)','var(--warning)','var(--danger)'];
+  document.getElementById('svStatusCard').innerHTML=types.map((t,i)=>{
+    const cnt=weekEv.filter(e=>e.type===t).length;
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;${i>0?'border-top:1px solid var(--border)':''}">
+      <span style="font-size:13px;font-weight:500;color:${tcolors[i]}">${tnames[i]}</span>
+      <span class="badge ${cnt>0?typeColor[t]:'gray'}">${cnt>0?cnt+' minh chứng':'Chưa nộp'}</span>
+    </div>`;
+  }).join('');
+
+  // Load comment from lecturer
+  try{
+    const cs=await fb.getDoc(fb.doc(fbDb,'comments',`${CU.lecturerUid}_${CU.uid}`));
+    const sec=document.getElementById('svCommentSection');
+    if(cs.exists()&&cs.data().text){
+      sec.style.display='block';
+      document.getElementById('svLatestComment').innerHTML=`<p style="font-size:13px;color:var(--text-2);font-style:italic">"${cs.data().text}"</p><p style="font-size:11px;color:var(--text-3);margin-top:6px">— Giảng viên hướng dẫn</p>`;
+    }else{sec.style.display='none'}
+  }catch(e){}
+}
+
+// ===== CLOUDINARY CONFIG =====
+const CLOUDINARY_CLOUD='du9imi7qr';
+const CLOUDINARY_PRESET='interntrack_uploads';
+
+// ===== FILE HANDLING =====
+// selFiles now stores {previewUrl, file} objects before upload, or plain URL strings after upload
+function handleFiles(event,type){
+  const files=Array.from(event.target.files);
+  if(selFiles[type].length+files.length>5){showToast('Tối đa 5 ảnh','warning');return}
+  files.forEach(f=>addPreview(f,type));
+}
+
+function addPreview(file,type){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    selFiles[type].push({previewUrl:e.target.result,file});
+    renderPreviews(type);
+  };
+  reader.readAsDataURL(file);
+}
+
+function renderPreviews(type){
+  document.getElementById(type==='checkin'?'checkinPreview':'submitPreview').innerHTML=
+    selFiles[type].map((item,i)=>{
+      const url=typeof item==='string'?item:item.previewUrl;
+      return `<div class="photo-thumb"><img src="${url}"><div class="remove-photo" onclick="removePhoto('${type}',${i})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="width:10px;height:10px;color:#fff"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div></div>`;
+    }).join('');
+}
+
+function removePhoto(type,idx){selFiles[type].splice(idx,1);renderPreviews(type)}
+
+async function uploadToCloudinary(file){
+  const fd=new FormData();
+  fd.append('file',file);
+  fd.append('upload_preset',CLOUDINARY_PRESET);
+  const res=await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,{method:'POST',body:fd});
+  if(!res.ok)throw new Error('Upload ảnh thất bại');
+  const json=await res.json();
+  // Trả về URL đã tối ưu kích thước (max 1200px, chất lượng auto)
+  return json.secure_url.replace('/upload/','/upload/w_1200,q_auto,f_auto/');
+}
+
+async function uploadAllPhotos(type){
+  const items=selFiles[type];
+  const urls=[];
+  for(let i=0;i<items.length;i++){
+    const item=items[i];
+    if(typeof item==='string'){urls.push(item);continue}
+    showLoad(`Đang tải ảnh ${i+1}/${items.length}...`);
+    const url=await uploadToCloudinary(item.file);
+    urls.push(url);
+  }
+  return urls;
+}
+
+function switchTab(btn,type){
+  currentSubmitType=type;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  const ph={task_assigned:'Người giao nhiệm vụ là ai? Yêu cầu cụ thể? Deadline?',task_progress:'Hôm nay làm gì? Dùng công cụ nào? Gặp khó khăn gì?',task_result:'Kết quả cụ thể? Đã bàn giao cho ai? Phản hồi từ quản lý?'};
+  document.getElementById('submitDesc').placeholder=ph[type]||'Mô tả chi tiết...';
+}
+
+// ===== SUBMIT EVIDENCE =====
+async function submitEvidence(type){
+  const isCI=type==='checkin';
+  const photos=selFiles[isCI?'checkin':'submit'];
+  if(!photos.length){showToast('Vui lòng chọn ít nhất 1 ảnh','error');return}
+  if(isCI){
+    const note=document.getElementById('checkinNote').value.trim();
+    if(note.length<20){showToast('Ghi chú tối thiểu 20 ký tự','error');return}
+    try{
+      const photoURLs=await uploadAllPhotos('checkin');
+      showLoad('Đang gửi check-in...');
+      const data={uid:CU.uid,type:'checkin',title:'Check-in',description:note,photoURLs,weekNumber:curWeek(),weekYear:curYear(),submittedAt:fb.st()};
+      await fb.setDoc(fb.doc(fbDb,'evidence',`${CU.uid}_ci_${Date.now()}`),data);
+      hideLoad();showToast('Check-in thành công!');
+      document.getElementById('checkinNote').value='';selFiles.checkin=[];
+      document.getElementById('checkinPreview').innerHTML='';
+      document.getElementById('checkinCount').textContent='0 / 20';
+      renderSVDashboard();
+    }catch(e){hideLoad();showToast('Lỗi tải ảnh: '+e.message,'error')}
+  }else{
+    const title=document.getElementById('submitTitle').value.trim();
+    const desc=document.getElementById('submitDesc').value.trim();
+    if(!title){showToast('Vui lòng nhập tên nhiệm vụ','error');return}
+    if(desc.length<30){showToast('Mô tả tối thiểu 30 ký tự','error');return}
+    try{
+      const photoURLs=await uploadAllPhotos('submit');
+      showLoad('Đang nộp minh chứng...');
+      const data={uid:CU.uid,type,title,description:desc,photoURLs,weekNumber:curWeek(),weekYear:curYear(),submittedAt:fb.st()};
+      await fb.setDoc(fb.doc(fbDb,'evidence',`${CU.uid}_${type}_${Date.now()}`),data);
+      hideLoad();showToast('Nộp minh chứng thành công!');
+      document.getElementById('submitTitle').value='';document.getElementById('submitDesc').value='';
+      selFiles.submit=[];document.getElementById('submitPreview').innerHTML='';
+      document.getElementById('submitCount').textContent='0 / 30';
+      renderSVDashboard();
+    }catch(e){hideLoad();showToast('Lỗi tải ảnh: '+e.message,'error')}
+  }
+}
+
+// ===== HISTORY =====
+async function renderHistory(){
+  const hw=offWeek(curWeek(),curYear(),historyWeekOff);
+  const list=document.getElementById('historyList');
+  list.innerHTML='<div style="text-align:center;padding:2rem"><div class="spinner" style="margin:auto"></div></div>';
+  const all=await fetchAllEvidenceForStudent(CU.uid);
+  const ev=all.filter(e=>e.weekNumber===hw.w&&e.weekYear===hw.y).sort((a,b)=>b.submittedAt-a.submittedAt);
+  if(!ev.length){list.innerHTML='<div class="empty-state card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:40px;height:40px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><p>Chưa có minh chứng nào trong tuần này</p></div>';return}
+  list.innerHTML=ev.map(e=>`<div class="history-item"><div class="history-dot" style="background:${typeDot[e.type]}"></div><div class="history-content"><div class="h-title"><span class="badge ${typeColor[e.type]}" style="margin-right:6px">${typeLabel[e.type]}</span>${e.type!=='checkin'?e.title||'':''}</div><div class="h-desc">${(e.description||'').substring(0,100)}${(e.description||'').length>100?'...':''}</div><div class="h-meta">${fmtTime(e.submittedAt)} · ${(e.photoURLs||[]).length} ảnh</div></div></div>`).join('');
+}
+
+// ===== MODAL =====
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.modal-backdrop').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open')}));
+
+function setBottomActive(navId, el) {
+  document.querySelectorAll(`#${navId} .bnav-item`).forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', async function(){
+  await initFB();
+  toggleRegFields();
+  updateWeekLabels();
+});
+</script>
+</body>
+</html>
